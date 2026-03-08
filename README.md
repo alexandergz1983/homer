@@ -1,39 +1,48 @@
 **Homer**
 
-En HOMER (Hypergeometric Optimization of Motif EnRichment), los peaks (o picos) son regiones genómicas específicas donde se concentra un número alto de lecturas de secuenciación, indicando enriquecimiento en experimentos como ChIP-Seq
+En HOMER (Hypergeometric Optimization of Motif EnRichment), los peaks (o picos) son regiones genómicas específicas donde se concentra un número alto de lecturas de secuenciación, indicando enriquecimiento en experimentos como ChIP-Seq. 
+
 Representan sitios de unión de proteínas (factores de transcripción, histonas) y se identifican usando la herramienta
 
 **Identificación:** HOMER busca picos de ancho fijo o variable, a menudo basándose en la autocorrelación de etiquetas para determinar el tamaño óptimo.
+
 **Función:** Una vez identificados, estos picos se analizan con annotatePeaks.pl para investigar motivos de secuencia, anotaciones génicas y relaciones espaciales.
-**Aplicación:** Los picos son fundamentales en ChIP-Seq, DNase-Seq y estudios de ARN naciente para mapear interacciones proteína-ADN
+
+**Aplicación:** Los picos son fundamentales en ChIP-Seq, DNase-Seq y estudios de ARN para mapear interacciones proteína-ADN
 
 Al trabajar con un archivo peaks.txt proveniente de un proyecto de NCBI (generalmente descargado de bases de datos como GEO) y generado con HOMER, estás tratando con una lista de coordenadas genómicas enriquecidas.
+
 Este archivo es el resultado del "peak calling" y contiene las regiones donde se detectó una unión significativa de proteínas o marcas de cromatina
 
 **Estructura y datos que contiene**
+
 Un archivo de picos estándar de HOMER es un archivo de texto delimitado por pestañas (tab-separated) con las siguientes columnas principales: 
 
-Column 1 (Peak ID): Un identificador único para cada pico.
-Column 2 (chr): El cromosoma donde se encuentra la región.
-Column 3 (start): La posición inicial de la región enriquecida.
-Column 4 (end): La posición final de la región.
-Column 5 (strand): La cadena (+ o -), aunque en ChIP-Seq a menudo se marca como 0 (sin dirección específica).
-Column 6 (Normalized Tag Count): Indica la densidad de lecturas (reads) en esa región, ajustada para permitir comparaciones entre muestras.
-Columnas adicionales: Pueden incluir el p-value, el fold enrichment (cuántas veces más señal hay respecto al control) y estadísticas de FDR (falsos positivos)
+**Column 1 (Peak ID):** Un identificador único para cada pico.
+**Column 2 (chr):** El cromosoma donde se encuentra la región.
+**Column 3 (start):** La posición inicial de la región enriquecida.
+**Column 4 (end):** La posición final de la región.
+**Column 5 (strand):** La cadena (+ o -), aunque en ChIP-Seq a menudo se marca como 0 (sin dirección específica).
+**Column 6 (Normalized Tag Count):** Indica la densidad de lecturas (reads) en esa región, ajustada para permitir comparaciones entre muestras.
+**Columnas adicionales:** Pueden incluir el p-value, el fold enrichment (cuántas veces más señal hay respecto al control) y estadísticas de FDR (falsos positivos)
 
 **Para qué sirven estos datos?**
 
 Al tener este archivo, ya has pasado la etapa de alineamiento de lecturas. Ahora puedes:
+
 **Anotar picos:** Usar annotatePeaks.pl para saber a qué genes pertenecen o qué tan cerca están de un sitio de inicio de transcripción (TSS).
+
 **Buscar Motivos**: Identificar secuencias de ADN específicas (motivos) que se repiten en esos picos para descubrir qué factor de transcripción se está uniendo.
+
 **Visualización:** Convertirlo a formato BED (usando pos2bed.pl) para verlo en navegadores genómicos como el UCSC Genome Browser o IGV
 
+Los archivos peaks.txt que descargamos de un proyecto en NCBI (específicamente de la base de datos GEO - Gene Expression Omnibus) son datos procesados que provienen de un flujo de trabajo de bioinformática estándar.
 
-Los archivos peaks.txt que descargas de un proyecto en NCBI (específicamente de la base de datos GEO - Gene Expression Omnibus) son datos procesados que provienen de un flujo de trabajo de bioinformática estándar.
 Aquí te explico el origen paso a paso de esos datos:
 
 **1. La fuente biológica (El experimento)**
 Los picos no existen por sí solos; provienen de una muestra biológica real procesada mediante técnicas de secuenciación de nueva generación (NGS). Lo más común es que provengan de:
+
 **ChIP-seq:** Para identificar dónde se unen proteínas (factores de transcripción) al ADN.
 **ATAC-seq:** Para localizar regiones de cromatina abierta o accesible.
 **DNase-seq:** Similar al ATAC-seq, para mapear sitios hipersensibles. 
