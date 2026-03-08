@@ -1,0 +1,14 @@
+name: homer
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.9
+  - bioconda::homer
+  - conda-forge::wget
+  - pip
+  - pip:
+      - pandas
+      - ncbi-genome-download
+      - biopython

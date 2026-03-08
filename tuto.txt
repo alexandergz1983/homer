@@ -1,0 +1,145 @@
+# pasos y requisitos homer:
+
+0. Tener conda o miniconda instalado
+
+
+1. Crear ambiente a partir del archivo yml: Lee el archivo motifs.yml e instala todas las dependencias automáticamente
+
+conda env create -f homer.yml
+
+# ó más rapido y recomendado (previamente fuera del cualquier ambiente instalar mamba: conda install -n base -c conda-forge mamba):
+
+mamba env create -f homer.yml
+
+
+2. Activar el ambiente:
+
+conda activate homer
+
+
+3. Crear carpeta contenedora de datos dentro de la carpeta llamada homer:
+
+mkdir -p data
+
+
+4. Descargar el genoma humano hg38 formato FASTA:
+
+cd data/
+
+wget http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz
+
+# descomprimir hg38.fa.gz para generar hg38.fa:
+
+gunzip hg38.fa.gz
+
+
+5. descargar anotaciones de refrencia para el FASTA hg38.fa:
+
+# descargar:
+
+wget http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz
+
+# dar permisos de lectura:
+
+chmod +x refGene.txt.gz
+
+# ejecutar script bash txt2gt.sh que convierte el txt que contiene las anotaciones de referencia a formato gtf para homer, creando el archivo de salida hg38_refseq.gtf:
+
+./txt2gtf.sh
+
+
+6. Descargar archivos peak:
+
+# bioproject: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE129314
+
+# Summary:
+# El objetivo general de este estudio es identificar la unión genómica de RUNX1 en células MCF10A. 
+# MCF10A: línea celular epitelial mamaria humana, inmortalizada pero no tumorigénica, utilizada como modelo estándar en la investigación del cáncer de mama para estudiar el comportamiento celular normal, vías de señalización y procesos de transformación
+
+# Se utilizo ChIPseq (ensayo de inmunoprecipitación de cromatina seguido de secuenciación profunda) para identificar los sitios de unión de RUNX1 en células MCF10A. 
+# Se realizó ChIPseq de RUNX1 utilizando células MCF10A parentales y no identificamos sitios de unión de alta confianza. 
+# Para superar este obstáculo, primero se generó una línea celular MCF10A con RUNX1 delecionado utilizando CRISPR-Cas9. 
+# Luego se transdujeron estas células MCF10A RUNX1 KO con lentivirus que expresan RUNX1 induciblemente. 
+# Después de tratar las células MCF10A inducibles por RUNX1 con 1 ug/ml de doxiciclina durante 24 horas, se realizó ChIPseq de RUNX1.
+
+# descargar:
+
+curl -O ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE129nnn/GSE129314/suppl/GSE129314_RUNX1ChIP_MCF10AOEq0.05_peaks.txt.gz
+# descomprimir:
+
+gunzip GSE129314_RUNX1ChIP_MCF10AOEq0.05_peaks.txt.gz
+
+
+cat GSE129314_RUNX1ChIP_MCF10AOEq0.05_peaks.txt | grep -n ^chr
+
+# grep -n ^chr busca líneas que comiencen con "chr" (cromosoma) y muestra el número de línea (-n). 
+# Esto permite identificar en qué línea comienzan los datos reales (después de posibles cabeceras o metadatos). 
+# En muchos archivos de picos (como los de MACS2), las primeras líneas son comentarios o cabeceras, y los datos empiezan con "chr". 
+# Saber el número de línea ayuda a saltarse esas cabeceras con tail.
+
+cat GSE129314_RUNX1ChIP_MCF10AOEq0.05_peaks.txt | tail -n +30 | cut -f 1-3,10 > GSE129314_RUNX1ChIP_peaks_homer2.txt
+
+# tail -n +30: muestra todas las líneas desde la línea 30 en adelante (omite las primeras 29). 
+# Se asume que la cabecera termina antes de la línea 30 (basado en el resultado del grep anterior).
+
+# cut -f 1-3,10: extrae las columnas 1, 2, 3 y 10. Las columnas 1-3 son: cromosoma, inicio, fin (formato BED). 
+# La columna 10 probablemente contiene el valor de enrichment o pico (por ejemplo, el -log10(p-value) o fold change). 
+#HOMER puede usar ese valor como peso para los picos en el análisis de motivos (si se incluye una cuarta columna).
+
+# ¿Por qué?: HOMER necesita un archivo con al menos tres columnas (chr, start, end). 
+# Opcionalmente una cuarta columna con un valor (por ejemplo, intensidad) que puede usar para ponderar. 
+# Además, se eliminan las líneas de cabecera que no son coordenadas.
+
+
+7. volver atras
+
+cd ../
+
+8. Ejecutar homer en regiones genómicas
+
+6. Run scripts Homer:
+
+A):
+
+findMotifsGenome.pl data/GSE129314_RUNX1ChIP_peaks_homer2.txt data/hg38.fa results/ -size 200
+
+# findMotifsGenome.pl: script principal de HOMER para encontrar motivos en regiones genómicas.
+
+# Argumentos:
+# data/GSE129314_RUNX1ChIP_peaks_homer.txt: archivo de entrada con las regiones (picos).
+# hg38: genoma de referencia (debe estar instalado o se puede pasar un archivo FASTA).
+# results/: directorio de salida donde se guardarán los resultados.
+
+# -size 200: tamaño de la región alrededor del centro del pico que se usará para la búsqueda de motivos (en este caso 200 pb). 
+# Esto significa que para cada pico, se tomarán 200 pb centrados en el pico (o desde el inicio/fin según configuración). 
+# El tamaño afecta la resolución y la probabilidad de encontrar motivos.
+
+# ¿Qué hace?: Busca motivos enriquecidos (de novo y conocidos) en las secuencias de esas regiones en comparación con un fondo (generalmente regiones aleatorias del genoma). 
+# Genera varios archivos en results/, incluyendo knownResults.html, homerResults.html, y archivos de motivos.
+
+# B):
+
+findMotifsGenome.pl data/GSE129314_RUNX1ChIP_peaks_homer2.txt data/hg38.fa results/ -find  results/knownResults/known41.motif > results/motif_instances.txt 
+
+# -find: modo de findMotifsGenome.pl que busca instancias de un motivo específico (en lugar de hacer un descubrimiento de novo).
+# results/knownResults/known41.motif: ruta al archivo de motivo (en formato HOMER) que se quiere buscar. 
+# En este caso, es el motivo conocido número 41 de los resultados previos (probablemente RUNX1). 
+# Este archivo contiene la matriz de probabilidades del motivo.
+
+# > results/motif_instances.txt: redirige la salida (lista de posiciones donde se encuentra el motivo) a un archivo.
+
+# ¿Qué hace?: Escanea las mismas regiones de entrada (peaks_homer.txt) y reporta todas las ocurrencias del motivo dado, indicando coordenadas, strand, score, etc. 
+# Útil para ver dónde aparece exactamente el motivo en cada pico.
+
+
+# C): 
+
+annotatePeaks.pl data/GSE129314_RUNX1ChIP_peaks_homer2.txt data/hg38.fa -gtf data/hg38_refseq.gtf -m results/knownResults/known41.motif > results/motif_instances_annotatePeak_method.txt
+
+# annotatePeaks.pl: otra herramienta de HOMER que anota picos con información génica, pero también puede buscar motivos.
+# -m: especifica el archivo de motivo a buscar.
+# > results/motif_instances_annotatePeak_method.txt: guarda la salida.
+
+# ¿Qué hace?: Similar al método 1, pero annotatePeaks.pl también añade anotaciones de genes cercanos, distancia, etc. 
+# Por lo tanto, el archivo resultante contendrá no solo las instancias del motivo, sino también información sobre qué genes están cerca del pico, lo que puede ser útil para interpretación biológica.
+
