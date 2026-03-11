@@ -5,9 +5,17 @@
 
 1. Crear ambiente a partir del archivo yml: Lee el archivo motifs.yml e instala todas las dependencias automáticamente
 
+git clone https://github.com/alexandergz1983/homer.git
+
+cd homer/
+
 conda env create -f homer.yml
 
 # ó más rapido y recomendado (previamente fuera del cualquier ambiente instalar mamba: conda install -n base -c conda-forge mamba):
+
+git clone https://github.com/alexandergz1983/homer.git
+
+cd homer/
 
 mamba env create -f homer.yml
 
