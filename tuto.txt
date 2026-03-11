@@ -21,6 +21,9 @@ conda activate homer
 
 mkdir -p data
 
+# mover txt2gtf.sh a la carpeta data:
+
+mv txt2gtf.sh data/
 
 4. Descargar el genoma humano hg38 formato FASTA:
 
